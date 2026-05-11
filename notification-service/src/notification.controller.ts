@@ -13,7 +13,7 @@ export class NotificationController {
     }
 
     console.log(
-      `[${new Date().toISOString()}] confirmation envoyée à ${order.customerEmail} pour la commande ${order.id}`
+      `[${new Date().toISOString()}] confirmation sent to ${order.customerEmail} for order ${order.id}`
     );
   }
 }

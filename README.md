@@ -1,97 +1,34 @@
-# projectServices_API
+# projectServices_API - NestJS Microservices
 
-Single root documentation for all 5 services in this project:
+A microservices architecture with 5 NestJS services using REST, gRPC, Kafka, and GraphQL.
 
-- catalog-service
-- order-service
-- stock-service
-- notification-service
-- query-service
+## Services and Ports
 
-## 1. Architecture Overview
+| Service | Type | Port | Protocol |
+|---------|------|------|----------|
+| **catalog-service** | REST API | 3000 | HTTP |
+| **order-service** | REST API | 3001 | HTTP |
+| **stock-service** | Microservice | 50051 | gRPC |
+| **notification-service** | Kafka Consumer | — | Kafka (9092) |
+| **query-service** | GraphQL API | 3002 | HTTP |
 
-This project is a NestJS microservices setup with mixed communication styles:
+### Infrastructure
+- **Kafka**: localhost:9092
+- **Zookeeper**: localhost:2181
 
-- REST:
-  - catalog-service
-  - order-service
-- gRPC:
-  - stock-service
-- Kafka consumer:
-  - notification-service
-- GraphQL gateway/query API:
-  - query-service
+---
 
-Infrastructure from docker-compose:
+## Prerequisites
 
-- Zookeeper on 2181
-- Kafka on 9092
-
-## 2. Services Summary
-
-### catalog-service
-
-- Type: REST API
-- Default port: 3000
-- Main routes:
-  - POST /products
-  - GET /products
-  - GET /products/:id
-  - PATCH /products/:id
-  - DELETE /products/:id
-
-### order-service
-
-- Type: REST API
-- Default port: 3001
-- Main routes:
-  - POST /orders
-  - GET /orders
-- Integrations:
-  - Calls stock-service via gRPC (CheckAndReserve)
-  - Publishes Kafka event order.created
-
-### stock-service
-
-- Type: gRPC microservice
-- Address: localhost:50051
-- Proto file: stock-service/src/proto/stock.proto
-- RPC:
-  - StockService.CheckAndReserve(StockRequest) -> StockResponse
-
-### notification-service
-
-- Type: Kafka microservice (consumer)
-- Kafka broker: localhost:9092
-- Event handled:
-  - order.created
-
-### query-service
-
-- Type: GraphQL API
-- Default port: 3002
-- GraphQL endpoint:
-  - http://localhost:3002/graphql
-- Main queries:
-  - products
-  - orders
-  - orderById(id: Int)
-
-## 3. Prerequisites
-
-- Node.js 18+ (recommended)
+- Node.js 18+
 - npm
-- Docker Desktop (for Kafka and Zookeeper)
+- Docker Desktop (for Kafka & Zookeeper)
 
-## 4. Project Setup (All Services)
+---
 
-From project root:
+## Setup
 
-```bash
-cd projectServices_API
-```
-
-Install dependencies for each service:
+### 1. Install Dependencies
 
 ```bash
 cd catalog-service && npm install
@@ -102,168 +39,219 @@ cd ../query-service && npm install
 cd ..
 ```
 
-## 5. Start Infrastructure (Kafka + Zookeeper)
-
-From root:
+### 2. Start Kafka & Zookeeper
 
 ```bash
 docker compose up -d
 ```
 
 Stop infrastructure:
-
 ```bash
 docker compose down
 ```
 
-## 6. Run All 5 Services (Recommended Order)
+---
 
-Open 5 terminals and run:
+## Startup Commands
 
-1. catalog-service
+Start each service in a separate terminal:
 
+### catalog-service (Port 3000)
 ```bash
 cd catalog-service
 npm run start:dev
 ```
 
-2. stock-service
-
-```bash
-cd stock-service
-npm run start:dev
-```
-
-3. order-service
-
+### order-service (Port 3001)
 ```bash
 cd order-service
 npm run start:dev
 ```
 
-4. notification-service
+### stock-service (Port 50051 - gRPC)
+```bash
+cd stock-service
+npm run start:dev
+```
 
+### notification-service (Kafka Consumer)
 ```bash
 cd notification-service
 npm run start:dev
 ```
 
-5. query-service
-
+### query-service (Port 3002 - GraphQL)
 ```bash
 cd query-service
 npm run start:dev
 ```
 
-## 7. Quick Test Flow
+---
 
-### Step A: Create a product (catalog-service)
+## Test Scenarios
 
-```http
-POST http://localhost:3000/products
-Content-Type: application/json
+### Scenario 1: Create a Product (Catalog Service)
 
-{
-  "name": "Keyboard",
-  "price": 99,
-  "stock": 20
-}
-```
+**Request screenshot**
 
-### Step B: Create an order (order-service)
+![Create product request](docs/screenshots/catalog-service/Create_a_Product1%28Request%29.png)
 
-```http
-POST http://localhost:3001/orders
-Content-Type: application/json
+**Response screenshot**
 
-{
-  "productId": 1,
-  "quantity": 2,
-  "customerEmail": "user@example.com"
-}
-```
+![Create product response](docs/screenshots/catalog-service/Create_a_Product1%28Response%29.png)
 
-Expected behavior:
+---
 
-- order-service checks stock via gRPC
-- if stock is available, order is confirmed
-- order-service publishes order.created to Kafka
-- notification-service logs a confirmation message
+### Scenario 2: Get All Products
 
-### Step C: Query with GraphQL (query-service)
+**Request screenshot**
 
-Open: http://localhost:3002/graphql
+![Get all products request](docs/screenshots/catalog-service/Get_All_Products%28Request%29.png)
 
-Example query:
+**Response screenshot**
 
-```graphql
-query {
-  orders {
-    id
-    productId
-    quantity
-    status
-  }
-}
-```
+![Get all products response](docs/screenshots/catalog-service/Get_All_Product%28Response%29.png)
 
-## 8. Screenshot Placeholders
+---
 
-Screenshot folders already prepared at root:
+### Scenario 3: Get One Product
 
-- docs/screenshots/catalog-service/
-- docs/screenshots/order-service/
-- docs/screenshots/stock-service/
-- docs/screenshots/notification-service/
-- docs/screenshots/query-service/
+**Request screenshot**
 
-Suggested screenshot file names:
+![Get one product request](docs/screenshots/catalog-service/Get_One_Products%28Request%29.png)
 
-- docs/screenshots/catalog-service/catalog-create-product.png
-- docs/screenshots/catalog-service/catalog-get-products.png
-- docs/screenshots/order-service/order-create-success.png
-- docs/screenshots/order-service/order-create-conflict.png
-- docs/screenshots/stock-service/stock-grpc-success.png
-- docs/screenshots/stock-service/stock-grpc-insufficient.png
-- docs/screenshots/notification-service/notification-order-created-log.png
-- docs/screenshots/query-service/query-graphql-orders.png
+**Response screenshot**
 
-You can embed screenshots directly in this README:
+![Get one product response](docs/screenshots/catalog-service/Get_One_Product%28Response%29.png)
 
-```markdown
-## Catalog - Create Product
-![Catalog Create Product](docs/screenshots/catalog-service/catalog-create-product.png)
+---
 
-## Order - Create Success
-![Order Create Success](docs/screenshots/order-service/order-create-success.png)
-```
+### Scenario 4: Update a Product
 
-## 9. Useful Commands
+**Request screenshot**
 
-Run tests inside any service folder:
+![Update product request](docs/screenshots/catalog-service/Update_a_Product1%28Request%29.png)
+
+**Response screenshot**
+
+![Update product response](docs/screenshots/catalog-service/Update_a_Product1%28Response%29.png)
+
+---
+
+### Scenario 5: Delete a Product
+
+**Request screenshot**
+
+![Delete product request](docs/screenshots/catalog-service/Delete_Product2%28Request%29.png)
+
+**Response screenshot**
+
+![Delete product response](docs/screenshots/catalog-service/Delete_Product2%28Response%29.png)
+
+---
+
+### Scenario 6: Create an Order (Order Service)
+
+**Request screenshot**
+
+![Valid order request](docs/screenshots/order-service/Create_an_Order_Valid2(Request).png)
+
+**Response screenshot**
+
+![Valid order response](docs/screenshots/order-service/Create_an_Order_Valid2(Response).png)
+
+**Expected flow:**
+1. Order service calls stock-service via gRPC (CheckAndReserve)
+2. Stock is checked and reserved
+3. Order is created with status "CONFIRMED"
+4. Kafka event `order.created` is published
+5. Notification service logs the confirmation
+
+---
+### Scenario 7: Insufficient Stock Test
+
+**Request screenshot**
+
+![Invalid order request](docs/screenshots/order-service/Create_an_Order_Invalid%28Request%29.png)
+
+**Response screenshot**
+
+![Invalid order response](docs/screenshots/order-service/Create_an_Order_Invalid%28Response%29.png)
+
+---
+
+### Scenario 8: Notification Service Log
+
+When an order is created, the notification service logs:
+
+![Notification service logs](docs/screenshots/notification-service/Notification_Service_Log.png)
+
+---
+
+### Scenario 9: Get All Orders
+
+**Request screenshot**
+
+![Get all orders request](docs/screenshots/order-service/Get_All_Orders%28Request%29.png)
+
+**Response screenshot**
+
+![Get all orders response](docs/screenshots/order-service/Get_All_Orders%28Response%29.png)
+
+---
+
+### Scenario 10: Query Orders via GraphQL (Query Service)
+
+**URL:** http://localhost:3002/graphql
+
+**Query screenshot**
+
+![GraphQL orders query](docs/screenshots/query-service/Query_Orders_via_GraphQL%28querry%29.png)
+
+**Response screenshot**
+
+![GraphQL orders response](docs/screenshots/query-service/Query_Orders_via_GraphQL%28Response%29.png)
+
+---
+
+### Scenario 11: Query Products via GraphQL
+
+**Query screenshot**
+
+![GraphQL products query](docs/screenshots/query-service/Query_Products_via_GraphQL%28querry%29.png)
+
+**Response screenshot**
+
+![GraphQL products response](docs/screenshots/query-service/Query_Products_via_GraphQL%28Response%29.png)
+
+---
+
+## Running Tests
 
 ```bash
+# Unit tests
+cd <service-folder>
 npm run test
+
+# E2E tests
 npm run test:e2e
 ```
 
-Build for production:
+---
+
+## Build for Production
 
 ```bash
+cd <service-folder>
 npm run build
 npm run start:prod
 ```
 
-## 10. Troubleshooting
+---
 
-- Kafka not available:
-  - make sure docker compose is up and kafka is running on 9092
-- gRPC call fails from order-service:
-  - make sure stock-service is running on localhost:50051
-- Port already in use:
-  - stop conflicting process or override PORT for the service
+## Notes
 
-## 11. Notes
-
-- Data in these services is currently in-memory (not persisted).
-- For local development, start all services in dev mode and keep terminals open.
+- All data is stored in-memory (not persisted to a database)
+- Stock service uses a Map to track product inventory
+- Kafka is used for asynchronous order notifications
+- gRPC is used for synchronous stock validation between order and stock services
