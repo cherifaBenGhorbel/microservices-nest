@@ -1,20 +1,30 @@
 # projectServices_API - NestJS Microservices
 
-A microservices architecture with 5 NestJS services using REST, gRPC, Kafka, and GraphQL.
+Distributed ordering platform built with 5 NestJS services and four communication styles: REST, gRPC, Kafka, and GraphQL.
 
-## Services and Ports
+## 1. Architecture and Roles
 
-| Service | Type | Port | Protocol |
-|---------|------|------|----------|
-| **catalog-service** | REST API | 3000 | HTTP |
-| **order-service** | REST API | 3001 | HTTP |
-| **stock-service** | Microservice | 50051 | gRPC |
-| **notification-service** | Kafka Consumer | — | Kafka (9092) |
-| **query-service** | GraphQL API | 3002 | HTTP |
+Flow overview:
 
-### Infrastructure
-- **Kafka**: localhost:9092
-- **Zookeeper**: localhost:2181
+- Client -> REST -> catalog-service
+- Client -> REST -> order-service -> gRPC -> stock-service
+- order-service -> Kafka topic `order.created` -> notification-service
+- Client -> GraphQL -> query-service -> REST -> catalog-service and order-service
+
+## 2. Services and Ports
+
+| Service | Responsibility | Port | Protocol |
+|---------|----------------|------|----------|
+| **catalog-service** | Product CRUD | 3000 | HTTP REST |
+| **order-service** | Create and list orders | 3001 | HTTP REST + gRPC client + Kafka producer |
+| **stock-service** | Stock check and reservation | 50051 | gRPC |
+| **notification-service** | Consume order events and log notifications | - | Kafka consumer (`localhost:9092`) |
+| **query-service** | Aggregated read API (`products`, `orders`) | 3002 | GraphQL over HTTP |
+
+Infrastructure:
+
+- Kafka: `localhost:9092`
+- Zookeeper: `localhost:2181`
 
 ---
 
@@ -204,6 +214,15 @@ When an order is created, the notification service logs:
 
 **URL:** http://localhost:3002/graphql
 
+query {
+  orders {
+    id
+    productId
+    quantity
+    status
+  }
+}
+
 **Query screenshot**
 
 ![GraphQL orders query](docs/screenshots/query-service/Query_Orders_via_GraphQL%28querry%29.png)
@@ -215,6 +234,15 @@ When an order is created, the notification service logs:
 ---
 
 ### Scenario 11: Query Products via GraphQL
+
+query {
+  products {
+    id
+    name
+    price
+    stock
+  }
+}
 
 **Query screenshot**
 
