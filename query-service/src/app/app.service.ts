@@ -22,12 +22,4 @@ export class AppService {
     return response.data;
   }
 
-  async getOrderById(id: number) {
-
-    const response = await axios.get(
-      `http://localhost:3001/orders/${id}`,
-    );
-
-    return response.data;
-  }
 }
